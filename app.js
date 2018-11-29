@@ -12,6 +12,8 @@ const md = require('markdown-it')({
 
 const users = JSON.parse(fs.readFileSync("./data/users.json"));
 const quotes = JSON.parse(fs.readFileSync("./data/quotes.json"));
+let subscribers = JSON.parse(fs.readFileSync("./data/subscribers.json"));
+
 
 var app = express();
 
@@ -100,6 +102,33 @@ app.post('/login', function (req, res) {
 
   app.get("/subscribe", function(req, res) {
     res.render("subscribe");
+  });
+
+  app.post('/subscribe', function (req, res) {
+    let subscriber = {
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email
+    };
+    subscribers.push(subscriber);
+    fs.writeFileSync(
+      "./data/subscribers.json",
+      JSON.stringify(subscribers)
+    );
+    const items = subscribers;
+    const header = Object.keys(items[0]);
+    const replacer = function(key, value) { return value === null ? '' : value } 
+    let csv = items.map(
+      row => header.map(
+        fieldName => JSON.stringify(row[fieldName], replacer)
+      ).join(',')
+    );
+    csv.unshift(header.join(','));
+    csv = csv.join("\n");
+    fs.writeFileSync("./download/subscribers.csv", csv);
+    res.render("subscribe-thanks", {
+      grid: false
+    });
   });
 
   app.get("/download", function(req, res, next) {

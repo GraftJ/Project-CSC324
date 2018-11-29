@@ -11,7 +11,16 @@
   <p>
     The best art is that done by accident.
   </p>
-
+        
+  <% if (role === "administrator") { %>
+    <h2>Get Subscribers</h2>
+    <p>
+      As an administrator, you can request a CSV file of all subscribers.
+    </p>
+    <form method="get" action="/download">
+      <button type="submit" class="pure-button pure-button-primary">Get Subscribers</button>
+   </form>
+  <% } %>
             
         </div>
         <% include partial/footer %>
