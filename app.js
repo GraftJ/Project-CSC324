@@ -3,6 +3,9 @@ var path = require("path");
 var express = require("express");
 const bodyParser = require("body-parser");
 const session = require("cookie-session");
+const helmet = require("helmet");
+const ms = require("ms");
+const enforceSSL = require("express-enforces-ssl");
 const fs = require("fs");
 const md = require('markdown-it')({
   html: true,
@@ -17,17 +20,26 @@ let subscribers = JSON.parse(fs.readFileSync("./data/subscribers.json"));
 
 var app = express();
 
+if (process.env.NODE_ENV == "production") {
+  app.use(enforceSSL());
+  app.use(helmet.hsts({
+    maxAge: ms("1 year"),
+    includeSubdomains: true
+  }));
+};
+
 app.set("views", path.resolve(__dirname, "views"));
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')));
+app.enable('trust proxy'); // optional, not needed for secure cookies
 app.use(session({
   name: "session",
   secret: "hey there",
-  //keys: process.env.KEY,
+  keys: process.env.KEY,
   maxAge: 60000,
-  secure: false,
+  secure: process.env.NODE_ENV == "production" ? true : false,
   httpOnly: true
 
 }))
@@ -139,7 +151,7 @@ app.post('/login', function (req, res) {
     res.status(404).render("404");
   });
   
-  http.createServer(app).listen(3000, function() {
-    console.log("Basic app (with login) started.");
+  http.createServer(app).listen(process.env.PORT || 3000, function() {
+    console.log("Basic app started.");
   });
   
